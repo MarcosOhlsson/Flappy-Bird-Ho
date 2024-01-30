@@ -1,0 +1,160 @@
+!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Flappy Bird Game</title>
+<style>
+body {  margin: 0;
+
+  display: flex;
+  justify-content: center;
+
+  align-items: center;
+  height: 100vh;
+  background-color: skyblue;
+}
+​<style>
+
+#gameCanvas {
+  border: 1px solid black;}
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 800;
+canvas.height = 600;
+
+let spacePressed = false;
+let frame = 0;
+let score = 0;
+let gamespeed = 3;
+
+class Bird {
+    constructor() {
+        this.x = 150;
+        this.y = 200;
+        this.vy = 0;
+        this.width = 20;
+        this.height = 20;
+        this.weight = 0.5;
+    }
+    update() {
+        if (this.y > canvas.height - this.height) {
+            this.y = canvas.height - this.height;
+            this.vy = 0;
+        } else {
+            this.vy += this.weight;
+            this.y += this.vy;
+        }
+        if (spacePressed) this.flap();
+    }
+    draw() {
+        ctx.fillStyle = 'yellow';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.width, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.closePath();
+        ctx.fillStyle = 'orange';
+        ctx.fillRect(this.x + this.width, this.y - 5, 10, 10);
+    }
+    flap() {
+        this.vy -= 1;
+    }
+}
+
+const bird = new Bird();
+
+class Pipe {
+    constructor() {
+        this.top = (Math.random() * (canvas.height / 6)) + 20;
+        this.bottom = canvas.height - (this.top + 150 + Math.random() * 50);
+        this.x = canvas.width;
+        this.width = 50;
+        this.color = 'green';
+        this.passed = false;
+    }
+    draw() {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, 0, this.width, this.top);
+        ctx.fillRect(this.x, this.bottom, this.width, canvas.height - this.bottom);
+    }
+    update() {
+        this.x -= gamespeed;
+        this.draw();
+    }
+}
+
+const pipes = [];
+
+function handlePipes() {
+    if (frame % 200 === 0) {
+        pipes.push(new Pipe());
+    }
+    pipes.forEach(function(pipe, index) {
+        pipe.update();
+        if (pipe.x + pipe.width < 0) {
+            pipes.splice(index, 1);
+        }
+        if (!pipe.passed && pipe.x + pipe.width < bird.x) {
+            score++;
+            pipe.passed = true;
+        }
+    });
+}
+
+function handleCollisions() {
+    for (let i = 0; i < pipes.length; i++) {
+        if (bird.x < pipes[i].x + pipes[i].width &&
+            bird.x + bird.width > pipes[i].x &&
+            (bird.y < pipes[i].top || bird.y + bird.height > pipes[i].bottom)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function checkLevelCompletion() {
+    if (score >= 10) {
+        ctx.font = "25px Georgia";
+        ctx.fillStyle = "black";
+        ctx.fillText("Congratulations! You finished Level 1.", 160, canvas.height / 2 - 30);
+        ctx.fillText(score + " points", 160, canvas.height / 2); // Updated message
+        return true;
+    }
+    return false;
+}
+
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    handlePipes();
+    bird.update();
+    bird.draw();
+
+    if (handleCollisions()) {
+        ctx.font = "25px Georgia";
+        ctx.fillStyle = "black";
+        ctx.fillText("Game Over, Your score is: " + score, 160, canvas.height / 2 - 10);
+        return; // Stop the animation loop
+    }
+
+    if (checkLevelCompletion()) {
+        return; // Stop the animation loop after displaying the level completion message
+    }
+
+    requestAnimationFrame(animate);
+    frame++;
+}
+
+animate();
+
+window.addEventListener('keydown', function(e) {
+    if (e.code === 'Space') spacePressed = true;
+});
+
+window.addEventListener('keyup', function(e) {
+    if (e.code === 'Space') spacePressed = false;
+});
+  <script>
+</body>
+</html>
